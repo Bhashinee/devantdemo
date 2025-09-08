@@ -2,6 +2,7 @@ import ballerina/http;
 import ballerina/sql;
 import ballerinax/mysql;
 import ballerinax/mysql.driver as _;
+import ballerina/io;
 
 configurable string dbUser = ?;
 configurable string dbPassword = ?;
@@ -26,12 +27,18 @@ service / on new http:Listener(9095) {
         self.db = check new (dbHost, dbUser, dbPassword, dbName, dbPort);
     }
 
-    resource function get albums() returns Album[]|error {
-        // Execute simple query to retrieve all records from the `albums` table.
-        stream<Album, sql:Error?> albumStream = self.db->query(`SELECT * FROM albums`);
-
-        // Process the stream and convert results to Album[] or return error.
-        return from Album album in albumStream
-            select album;
+    resource function get albums() returns string|error {
+        sql:ExecutionResult result = 
+                check self.db->execute(`CREATE TABLE student (
+                                           id INT AUTO_INCREMENT,
+                                           age INT, 
+                                           name VARCHAR(255), 
+                                           PRIMARY KEY (id)
+                                         )`);
+        io:println("Table created succesfully" + result.toString());
+        sql:ExecutionResult insertResult = check self.db->execute(`INSERT INTO student(age, name)
+                                                        VALUES (23, 'john')`);                                 
+        io:println("Insert operation successful" + insertResult.toString());
+        return insertResult.toString();
     }
 }
