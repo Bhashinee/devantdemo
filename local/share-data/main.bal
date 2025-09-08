@@ -11,7 +11,6 @@ configurable int dbPort = 3306;
 
 final mysql:Client db = check new (dbHost, dbUser, dbPassword, dbName, dbPort);
 
-// The `Album` record to load records from `albums` table.
 type Album record {|
     string id;
     string title;

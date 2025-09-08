@@ -10,12 +10,11 @@ configurable string dbName = ?;
 configurable string dbHost = ?;
 configurable int dbPort = 3306;
 
-// The `Album` record to load records from `albums` table.
-type Album record {|
-    string id;
-    string title;
-    string artist;
-    float price;
+// The `Student` record to load records from `student` table.
+type Student record {|
+    int id;
+    string name;
+    int age;
 |};
 
 service / on new http:Listener(9095) {
@@ -27,7 +26,7 @@ service / on new http:Listener(9095) {
         self.db = check new (dbHost, dbUser, dbPassword, dbName, dbPort);
     }
 
-    resource function get albums() returns string|error {
+    resource function get albums() returns Student[]|string|error {
         sql:ExecutionResult result = 
                 check self.db->execute(`CREATE TABLE student (
                                            id INT AUTO_INCREMENT,
@@ -35,10 +34,14 @@ service / on new http:Listener(9095) {
                                            name VARCHAR(255), 
                                            PRIMARY KEY (id)
                                          )`);
-        io:println("Table created succesfully" + result.toString());
+        io:println("Table created successfully" + result.toString());
         sql:ExecutionResult insertResult = check self.db->execute(`INSERT INTO student(age, name)
                                                         VALUES (23, 'john')`);                                 
         io:println("Insert operation successful" + insertResult.toString());
-        return insertResult.toString();
+        stream<Student, sql:Error?> studentStream = check self.db->query(`SELECT * FROM student`);
+
+        // Collect the records from the stream to a list.
+        return from Student student in studentStream
+            select student;
     }
 }
