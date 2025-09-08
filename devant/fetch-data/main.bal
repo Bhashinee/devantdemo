@@ -1,46 +1,37 @@
 import ballerina/http;
+import ballerina/sql;
+import ballerinax/mysql;
+import ballerinax/mysql.driver as _;
 
-listener http:Listener ep0 = new (9090);
+configurable string dbUser = ?;
+configurable string dbPassword = ?;
+configurable string dbName = ?;
+configurable string dbHost = ?;
+configurable int dbPort = 3306;
 
-service / on ep0 {
-    resource function get books() returns json | http:NotFound {
-        json booksList = [
-            { "id": "1", "title": "1984", "author": "George Orwell" },
-            { "id": "2", "title": "To Kill a Mockingbird", "author": "Harper Lee" },
-            { "id": "3", "title": "The Great Gatsby", "author": "F. Scott Fitzgerald" }
-        ];
-        return booksList;
+// The `Album` record to load records from `albums` table.
+type Album record {|
+    string id;
+    string title;
+    string artist;
+    float price;
+|};
+
+service / on new http:Listener(9095) {
+    private final mysql:Client db;
+
+    function init() returns error? {
+        // Initiate the mysql client at the start of the service. This will be used
+        // throughout the lifetime of the service.
+        self.db = check new (dbHost, dbUser, dbPassword, dbName, dbPort);
     }
 
-    resource function post books(@http:Payload json payload) returns json|error {
-        json newBook = {
-            "id": "4",
-            "title": check payload.title,
-            "author": check payload.author
-        };
-        return newBook;
-    }
+    resource function get albums() returns Album[]|error {
+        // Execute simple query to retrieve all records from the `albums` table.
+        stream<Album, sql:Error?> albumStream = self.db->query(`SELECT * FROM albums`);
 
-    resource function get books/[string id]() returns json | http:NotFound {
-        json book = {
-            "id": id,
-            "title": "Sample Book",
-            "author": "Sample Author"
-        };
-        return book;
-    }
-
-    resource function put books/[string id](@http:Payload json payload) returns json|http:NotFound|error {
-        json updatedBook = {
-            "id": id,
-            "title": check payload.title,
-            "author": check payload.author
-        };
-        return updatedBook;
-    }
-
-    resource function delete books/[string id]() returns json | http:NotFound {
-        json response = { "message": "Book with id " + id + " deleted successfully." };
-        return response;
+        // Process the stream and convert results to Album[] or return error.
+        return from Album album in albumStream
+            select album;
     }
 }
