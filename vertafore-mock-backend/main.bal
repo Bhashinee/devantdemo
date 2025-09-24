@@ -2,7 +2,7 @@ import ballerina/http;
 import ballerina/io;
 
 // Initialize HTTP service
-service /consumer/v1/ams360 on new http:Listener(8080) {
+service /consumer/v1/ams360 on new http:Listener(9080) {
 
     // Resource function to handle table requests
     resource function get 'table/[string tableName](
