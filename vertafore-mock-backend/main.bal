@@ -1,6 +1,15 @@
 import ballerina/http;
 import ballerina/io;
 
+// Module-level map to track total records sent per table
+map<int> recordsSentPerTable = {};
+
+// Predefined epoch values to use as starting tokens
+string[] epochTokens = ["eyJlZzEiOiAxNzQ4NjI4NDcwNDU1NzM3MjIwfQ==", "eyJlZzEiOiAxNzU4Nzc5MzM5ODQ4ODI1NTQxfQ==", "eyJlZzEiOiAxNzU4Nzc5MzM5ODQ4ODc1NTQxfQ==", "eyJlZzEiOiAxNzU4Nzc5MzM5ODM4ODc1NTQxfQ==", "eyJlZzEiOiAxNzU4Nzc5MzM5ODMyODk1NTQxfQ==", "eyJlZzEiOiAxNzU4Nzc5MzM5ODMyODc1NTQxfQ=="];
+
+// Module-level counter to track which epoch token to use next
+int tokenIndex = 0;
+
 // Initialize HTTP service
 service /consumer/v1/ams360 on new http:Listener(9080) {
 
@@ -10,7 +19,7 @@ service /consumer/v1/ams360 on new http:Listener(9080) {
             string? schema = (),
             string? 'select = (),
             string? starting_token = ()
-    ) returns ApiResponse|http:InternalServerError {
+    ) returns ApiResponse|error {
 
         // Process query parameters
         int pageLimit = 10; // default limit
@@ -24,20 +33,17 @@ service /consumer/v1/ams360 on new http:Listener(9080) {
         string tableSchema = schema ?: "public";
         string selectFields = 'select ?: "*";
         
-        // Parse starting token to get offset
-        int startOffset = 0;
-        if starting_token is string {
-            int|error tokenResult = int:fromString(starting_token);
-            if tokenResult is int {
-                startOffset = tokenResult;
-            }
-        }
+        // Get current record count for this specific table
+        int currentTableRecordsSent = recordsSentPerTable[tableName] ?: 0;
+        
+        // Use the current records sent as the starting offset instead of token-based calculation
+        int startOffset = currentTableRecordsSent;
 
-        // Generate large mock data sets with 4000 records each
+        // Generate large mock data sets with 20080 records each
         json[] mockData = [];
 
         if tableName == "customers" {
-            // Generate 4000 customer records
+            // Generate 20080 customer records
             string[] firstNames = ["John", "Jane", "Bob", "Alice", "Charlie", "Diana", "Edward", "Fiona", "George", "Helen", 
                                  "Ian", "Julia", "Kevin", "Laura", "Michael", "Nancy", "Oliver", "Patricia", "Quinn", "Rachel", "Keyon"];
             string[] lastNames = ["Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis", "Rodriguez", "Martinez",
@@ -49,7 +55,7 @@ service /consumer/v1/ams360 on new http:Listener(9080) {
                                   "Coordinator", "Administrator", "Supervisor", "Technician", "Representative", "Assistant", "Executive"];
 
             int i = 1;
-            while i <= 4000 {
+            while i <= 20080 {
                 string firstName = firstNames[(i - 1) % firstNames.length()];
                 string lastName = lastNames[(i - 1) % lastNames.length()];
                 string fullName = firstName + " " + lastName;
@@ -68,7 +74,7 @@ service /consumer/v1/ams360 on new http:Listener(9080) {
                 i = i + 1;
             }
         } else if tableName == "products" {
-            // Generate 4000 product records
+            // Generate 20080 product records (same as customers)
             string[] productNames = ["Laptop", "Phone", "Tablet", "Monitor", "Keyboard", "Mouse", "Desk", "Chair", "Bookshelf", "Lamp",
                                    "Printer", "Scanner", "Camera", "Headphones", "Speaker", "Router", "Switch", "Cable", "Adapter", "Charger",
                                    "Battery", "Memory", "Storage", "Processor", "Motherboard", "Graphics Card", "Power Supply", "Case", "Fan", "Cooler"];
@@ -76,7 +82,7 @@ service /consumer/v1/ams360 on new http:Listener(9080) {
             string[] brands = ["TechCorp", "InnovateTech", "FutureTech", "SmartDevices", "ProTech", "EliteElectronics", "NextGen", "PowerTech", "UltraTech", "MegaTech"];
 
             int i = 1;
-            while i <= 4000 {
+            while i <= 20080 {
                 string productName = productNames[(i - 1) % productNames.length()];
                 string category = categories[(i - 1) % categories.length()];
                 string brand = brands[(i - 1) % brands.length()];
@@ -97,31 +103,53 @@ service /consumer/v1/ams360 on new http:Listener(9080) {
                 i = i + 1;
             }
         } else {
-            // Generate 4000 generic records for other table names
-            int i = 1;
-            while i <= 4000 {
-                json genericRecord = {
-                    "id": i.toString(),
-                    "table_name": tableName,
-                    "message": "Generic data for " + tableName + " - Item " + i.toString(),
-                    "sequence": i,
-                    "status": i % 2 == 0 ? "active" : "inactive"
-                };
-                mockData.push(genericRecord);
-                i = i + 1;
-            }
+            // Generate 20080 generic records for other table names
+            // int i = 1;
+            // while i <= 20080 {
+            //     json genericRecord = {
+            //         "id": i.toString(),
+            //         "table_name": tableName,
+            //         "message": "Generic data for " + tableName + " - Item " + i.toString(),
+            //         "sequence": i,
+            //         "status": i % 2 == 0 ? "active" : "inactive"
+            //     };
+            //     mockData.push(genericRecord);
+            //     i = i + 1;
+            // }
+            return error("Table not found");
         }
 
         int totalDataLength = mockData.length();
         
-        // Check if start offset is beyond available data
-        if startOffset >= totalDataLength {
+        io:println("Table: " + tableName + ", Total data generated: " + totalDataLength.toString() + ", Current records sent: " + currentTableRecordsSent.toString() + ", Start offset: " + startOffset.toString());
+        
+        // Check if this specific table has already sent 20080 records, return empty content
+        if currentTableRecordsSent >= 20080 {
+            // Reset counter for this table for next cycle
+            recordsSentPerTable[tableName] = 0;
+            // Always provide a starting token - use first epoch token to restart cycle
+            string restartToken = epochTokens[0];
             ApiResponse response = {
                 content: [],
-                starting_token: (),
+                starting_token: restartToken,
                 recordCount: totalDataLength
             };
-            io:println("Response (no more data): ", response);
+            io:println("Response for table " + tableName + " (20080 records already sent, returning empty content): ", response);
+            return response;
+        }
+        
+        // Check if start offset is beyond available data
+        if startOffset >= totalDataLength {
+            // Always provide a starting token - use next epoch token
+            int currentTokenIndex = tokenIndex % epochTokens.length();
+            string nextAvailableToken = epochTokens[currentTokenIndex];
+            tokenIndex = tokenIndex + 1;
+            ApiResponse response = {
+                content: [],
+                starting_token: nextAvailableToken,
+                recordCount: totalDataLength
+            };
+            io:println("Response for table " + tableName + " (no more data): ", response);
             return response;
         }
 
@@ -132,17 +160,27 @@ service /consumer/v1/ams360 on new http:Listener(9080) {
             endOffset = totalDataLength;
         }
 
+        // Check if adding this batch would exceed 20080 total records sent for this table
+        int recordsToSend = endOffset - startOffset;
+        if currentTableRecordsSent + recordsToSend > 20080 {
+            // Adjust to only send up to 20080 total records for this table
+            recordsToSend = 20080 - currentTableRecordsSent;
+            endOffset = startOffset + recordsToSend;
+        }
+
         int i = startOffset;
         while i < endOffset {
             batchData.push(mockData[i]);
             i = i + 1;
         }
 
-        // Determine next starting token
-        string? nextToken = ();
-        if endOffset < totalDataLength {
-            nextToken = endOffset.toString();
-        }
+        // Update total records sent counter for this specific table
+        recordsSentPerTable[tableName] = currentTableRecordsSent + batchData.length();
+
+        // Always provide a starting token using predefined epoch values
+        int currentTokenIndex = tokenIndex % epochTokens.length();
+        string nextToken = epochTokens[currentTokenIndex];
+        tokenIndex = tokenIndex + 1;
 
         // Create response
         ApiResponse response = {
@@ -151,7 +189,7 @@ service /consumer/v1/ams360 on new http:Listener(9080) {
             recordCount: totalDataLength
         };
 
-        io:println("Response (offset: " + startOffset.toString() + ", limit: " + pageLimit.toString() + ", total: " + totalDataLength.toString() + "): ");
+        io:println("Response for table " + tableName + " (offset: " + startOffset.toString() + ", limit: " + pageLimit.toString() + ", total: " + totalDataLength.toString() + ", sent so far: " + recordsSentPerTable[tableName].toString() + ", batch size: " + batchData.length().toString() + "): ");
 
         return response;
     }
