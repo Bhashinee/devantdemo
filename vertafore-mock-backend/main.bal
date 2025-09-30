@@ -43,7 +43,7 @@ service /consumer/v1/ams360 on new http:Listener(9080) {
         json[] mockData = [];
 
         if tableName == "customers" {
-            // Generate 20080 customer records
+            // Generate 20080 customer records with 30+ columns
             string[] firstNames = ["John", "Jane", "Bob", "Alice", "Charlie", "Diana", "Edward", "Fiona", "George", "Helen", 
                                  "Ian", "Julia", "Kevin", "Laura", "Michael", "Nancy", "Oliver", "Patricia", "Quinn", "Rachel", "Keyon"];
             string[] lastNames = ["Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis", "Rodriguez", "Martinez",
@@ -51,8 +51,15 @@ service /consumer/v1/ams360 on new http:Listener(9080) {
             string[] cities = ["New York", "Los Angeles", "Chicago", "Houston", "Phoenix", "Philadelphia", "San Antonio", "San Diego",
                              "Dallas", "San Jose", "Austin", "Jacksonville", "Fort Worth", "Columbus", "Charlotte", "San Francisco",
                              "Indianapolis", "Seattle", "Denver", "Washington", "Boston", "El Paso", "Nashville", "Detroit", "Oklahoma City"];
+            string[] states = ["NY", "CA", "IL", "TX", "AZ", "PA", "TX", "CA", "TX", "CA", "TX", "FL", "TX", "OH", "NC", "CA", "IN", "WA", "CO", "DC", "MA", "TX", "TN", "MI", "OK"];
             string[] occupations = ["Engineer", "Designer", "Manager", "Developer", "Analyst", "Consultant", "Director", "Specialist",
                                   "Coordinator", "Administrator", "Supervisor", "Technician", "Representative", "Assistant", "Executive"];
+            string[] departments = ["Engineering", "Marketing", "Sales", "HR", "Finance", "Operations", "IT", "Customer Service", "Legal", "R&D"];
+            string[] maritalStatus = ["Single", "Married", "Divorced", "Widowed"];
+            string[] educationLevels = ["High School", "Bachelor's", "Master's", "PhD", "Associate"];
+            string[] incomeRanges = ["25000-35000", "35000-50000", "50000-75000", "75000-100000", "100000-150000", "150000+"];
+            string[] customerTypes = ["Premium", "Standard", "Basic", "VIP", "Corporate"];
+            string[] communicationPrefs = ["Email", "Phone", "SMS", "Mail"];
 
             int i = 1;
             while i <= 20080 {
@@ -60,44 +67,144 @@ service /consumer/v1/ams360 on new http:Listener(9080) {
                 string lastName = lastNames[(i - 1) % lastNames.length()];
                 string fullName = firstName + " " + lastName;
                 string city = cities[(i - 1) % cities.length()];
+                string state = states[(i - 1) % states.length()];
                 string occupation = occupations[(i - 1) % occupations.length()];
+                string department = departments[(i - 1) % departments.length()];
+                string marital = maritalStatus[(i - 1) % maritalStatus.length()];
+                string education = educationLevels[(i - 1) % educationLevels.length()];
+                string incomeRange = incomeRanges[(i - 1) % incomeRanges.length()];
+                string customerType = customerTypes[(i - 1) % customerTypes.length()];
+                string commPref = communicationPrefs[(i - 1) % communicationPrefs.length()];
+                
                 int age = 22 + ((i - 1) % 43); // Ages between 22 and 64
+                int zipCode = 10000 + ((i - 1) % 89999);
+                decimal creditScore = 300.0d + <decimal>((i - 1) % 551); // Credit scores 300-850
+                decimal annualIncome = 25000.0d + <decimal>((i - 1) % 175000); // Income 25k-200k
+                boolean isActive = i % 10 != 0; // 90% active customers
+                boolean hasInsurance = i % 3 == 0; // 33% have insurance
+                int yearsWithCompany = (i - 1) % 25; // 0-24 years
+                int dependents = (i - 1) % 6; // 0-5 dependents
 
                 json customerRecord = {
-                    "id": i.toString(),
-                    "name": fullName,
-                    "age": age,
+                    "customer_id": i.toString(),
+                    "first_name": firstName,
+                    "last_name": lastName,
+                    "full_name": fullName,
+                    "email": firstName.toLowerAscii() + "." + lastName.toLowerAscii() + "@email.com",
+                    "phone_primary": "(" + ((200 + (i % 800)).toString()) + ") " + ((100 + (i % 900)).toString()) + "-" + ((1000 + (i % 9000)).toString()),
+                    "phone_secondary": "(" + ((300 + (i % 700)).toString()) + ") " + ((200 + (i % 800)).toString()) + "-" + ((2000 + (i % 8000)).toString()),
+                    "address_line1": ((100 + (i % 9900)).toString()) + " " + firstNames[(i + 5) % firstNames.length()] + " Street",
+                    "address_line2": i % 4 == 0 ? "Apt " + ((i % 50) + 1).toString() : (),
                     "city": city,
-                    "occupation": occupation
+                    "state": state,
+                    "zip_code": zipCode.toString(),
+                    "country": "USA",
+                    "age": age,
+                    "date_of_birth": "19" + ((60 + (age - 22)).toString()) + "-" + ((i % 12) + 1).toString().padStart(2, "0") + "-" + ((i % 28) + 1).toString().padStart(2, "0"),
+                    "gender": i % 2 == 0 ? "Male" : "Female",
+                    "marital_status": marital,
+                    "education_level": education,
+                    "occupation": occupation,
+                    "department": department,
+                    "annual_income": annualIncome,
+                    "income_range": incomeRange,
+                    "credit_score": creditScore,
+                    "customer_type": customerType,
+                    "customer_since": "20" + ((10 + (yearsWithCompany / 10)).toString()) + "-" + ((i % 12) + 1).toString().padStart(2, "0") + "-" + ((i % 28) + 1).toString().padStart(2, "0"),
+                    "years_with_company": yearsWithCompany,
+                    "is_active": isActive,
+                    "account_status": isActive ? "Active" : "Inactive",
+                    "has_insurance": hasInsurance,
+                    "number_of_dependents": dependents,
+                    "communication_preference": commPref,
+                    "last_contact_date": "2024-" + ((i % 12) + 1).toString().padStart(2, "0") + "-" + ((i % 28) + 1).toString().padStart(2, "0"),
+                    "total_purchases": (i % 50) + 1,
+                    "lifetime_value": <decimal>((i % 10000) + 500),
+                    "preferred_contact_time": i % 3 == 0 ? "Morning" : (i % 3 == 1 ? "Afternoon" : "Evening"),
+                    "social_security_last4": ((1000 + (i % 9000)).toString()),
+                    "emergency_contact_name": lastNames[(i + 10) % lastNames.length()] + ", " + firstNames[(i + 15) % firstNames.length()],
+                    "emergency_contact_phone": "(" + ((400 + (i % 600)).toString()) + ") " + ((300 + (i % 700)).toString()) + "-" + ((3000 + (i % 7000)).toString()),
+                    "created_at": "2020-01-01T00:00:00Z",
+                    "updated_at": "2024-01-01T00:00:00Z"
                 };
                 mockData.push(customerRecord);
                 i = i + 1;
             }
         } else if tableName == "products" {
-            // Generate 20080 product records (same as customers)
+            // Generate 20080 product records with 30+ columns
             string[] productNames = ["Laptop", "Phone", "Tablet", "Monitor", "Keyboard", "Mouse", "Desk", "Chair", "Bookshelf", "Lamp",
                                    "Printer", "Scanner", "Camera", "Headphones", "Speaker", "Router", "Switch", "Cable", "Adapter", "Charger",
                                    "Battery", "Memory", "Storage", "Processor", "Motherboard", "Graphics Card", "Power Supply", "Case", "Fan", "Cooler"];
             string[] categories = ["Electronics", "Furniture", "Accessories", "Components", "Peripherals", "Storage", "Networking", "Audio", "Video", "Computing"];
             string[] brands = ["TechCorp", "InnovateTech", "FutureTech", "SmartDevices", "ProTech", "EliteElectronics", "NextGen", "PowerTech", "UltraTech", "MegaTech"];
+            string[] suppliers = ["Global Supply Co", "Tech Distributors", "Premium Parts Inc", "Wholesale Electronics", "Direct Manufacturing"];
+            string[] colors = ["Black", "White", "Silver", "Blue", "Red", "Green", "Gray", "Gold"];
+            string[] conditions = ["New", "Refurbished", "Open Box", "Used - Like New"];
+            string[] warranties = ["1 Year", "2 Years", "3 Years", "Lifetime", "90 Days"];
+            string[] origins = ["USA", "China", "Japan", "Germany", "South Korea", "Taiwan"];
 
             int i = 1;
             while i <= 20080 {
                 string productName = productNames[(i - 1) % productNames.length()];
                 string category = categories[(i - 1) % categories.length()];
                 string brand = brands[(i - 1) % brands.length()];
+                string supplier = suppliers[(i - 1) % suppliers.length()];
+                string color = colors[(i - 1) % colors.length()];
+                string condition = conditions[(i - 1) % conditions.length()];
+                string warranty = warranties[(i - 1) % warranties.length()];
+                string origin = origins[(i - 1) % origins.length()];
+                
                 // Generate varied prices between $19.99 and $1999.99
                 decimal basePrice = 19.99d;
                 decimal priceMultiplier = <decimal>((i - 1) % 100 + 1);
                 decimal price = basePrice + (priceMultiplier * 19.8d);
+                decimal costPrice = price * 0.6d; // 60% of selling price
+                decimal weight = 0.1d + <decimal>((i % 100) / 10); // 0.1 to 10.1 lbs
+                int stockQuantity = (i % 1000) + 10; // 10-1009 units
+                decimal rating = 1.0d + <decimal>((i % 40) / 10); // 1.0 to 5.0 rating
+                int reviewCount = (i % 500) + 1; // 1-500 reviews
 
                 json productRecord = {
-                    "id": i.toString(),
+                    "product_id": i.toString(),
                     "product_name": brand + " " + productName,
-                    "price": price,
-                    "category": category,
                     "brand": brand,
-                    "sku": "SKU-" + i.toString().padStart(6, "0")
+                    "category": category,
+                    "subcategory": category + " - " + productName,
+                    "sku": "SKU-" + i.toString().padStart(6, "0"),
+                    "upc": "0" + ((12345678900 + i).toString()),
+                    "model_number": brand.substring(0, 3).toUpperAscii() + "-" + i.toString(),
+                    "price": price,
+                    "cost_price": costPrice,
+                    "msrp": price * 1.2d,
+                    "discount_percentage": <decimal>((i % 50)),
+                    "currency": "USD",
+                    "description": "High-quality " + productName + " from " + brand + " with excellent features and reliability.",
+                    "short_description": brand + " " + productName + " - Premium Quality",
+                    "color": color,
+                    "size": i % 3 == 0 ? "Small" : (i % 3 == 1 ? "Medium" : "Large"),
+                    "weight": weight,
+                    "dimensions": ((10 + (i % 20)).toString()) + "x" + ((8 + (i % 15)).toString()) + "x" + ((2 + (i % 8)).toString()) + " inches",
+                    "condition": condition,
+                    "warranty": warranty,
+                    "supplier": supplier,
+                    "supplier_id": "SUP-" + ((i % 100) + 1).toString().padStart(3, "0"),
+                    "manufacturer": brand,
+                    "country_of_origin": origin,
+                    "stock_quantity": stockQuantity,
+                    "reorder_level": stockQuantity / 10,
+                    "max_stock_level": stockQuantity * 2,
+                    "is_active": i % 20 != 0, // 95% active products
+                    "is_featured": i % 10 == 0, // 10% featured products
+                    "is_on_sale": i % 7 == 0, // ~14% on sale
+                    "rating": rating,
+                    "review_count": reviewCount,
+                    "total_sold": (i % 10000) + 50,
+                    "created_date": "2020-" + ((i % 12) + 1).toString().padStart(2, "0") + "-" + ((i % 28) + 1).toString().padStart(2, "0"),
+                    "last_updated": "2024-" + ((i % 12) + 1).toString().padStart(2, "0") + "-" + ((i % 28) + 1).toString().padStart(2, "0"),
+                    "launch_date": "2021-" + ((i % 12) + 1).toString().padStart(2, "0") + "-" + ((i % 28) + 1).toString().padStart(2, "0"),
+                    "discontinue_date": i % 50 == 0 ? "2025-12-31" : (),
+                    "tags": category + "," + brand + "," + color,
+                    "barcode": "123456789" + i.toString().padStart(3, "0")
                 };
                 mockData.push(productRecord);
                 i = i + 1;
