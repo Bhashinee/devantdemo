@@ -10,6 +10,25 @@ string[] epochTokens = ["eyJlZzEiOiAxNzQ4NjI4NDcwNDU1NzM3MjIwfQ==", "eyJlZzEiOiA
 // Module-level counter to track which epoch token to use next
 int tokenIndex = 0;
 
+// Helper function to filter JSON record based on selected fields
+function filterRecord(json inputRecord, string[] selectedFields) returns json {
+    if selectedFields.length() == 0 {
+        return inputRecord;
+    }
+    
+    map<json> filteredRecord = {};
+    if inputRecord is map<json> {
+        foreach string fieldName in selectedFields {
+            string trimmedField = fieldName.trim();
+            if inputRecord.hasKey(trimmedField) {
+                json fieldValue = inputRecord.get(trimmedField);
+                filteredRecord[trimmedField] = fieldValue;
+            }
+        }
+    }
+    return filteredRecord;
+}
+
 // Initialize HTTP service
 service /consumer/v1/ams360 on new http:Listener(9080) {
 
@@ -17,9 +36,11 @@ service /consumer/v1/ams360 on new http:Listener(9080) {
     resource function get 'table/[string tableName](
             string? 'limit = (),
             string? schema = (),
-            string? 'select = (),
+            string[] 'select = [],
             string? starting_token = ()
     ) returns ApiResponse|error {
+        io:println("----------------select fields: ");
+        io:println('select);
 
         // Process query parameters
         int pageLimit = 10; // default limit
@@ -31,7 +52,9 @@ service /consumer/v1/ams360 on new http:Listener(9080) {
         }
 
         string tableSchema = schema ?: "public";
-        string selectFields = 'select ?: "*";
+        
+        // Use the select array directly - no need to parse as string
+        string[] selectedFieldNames = 'select;
         
         // Get current record count for this specific table
         int currentTableRecordsSent = recordsSentPerTable[tableName] ?: 0;
@@ -210,25 +233,12 @@ service /consumer/v1/ams360 on new http:Listener(9080) {
                 i = i + 1;
             }
         } else {
-            // Generate 20080 generic records for other table names
-            // int i = 1;
-            // while i <= 20080 {
-            //     json genericRecord = {
-            //         "id": i.toString(),
-            //         "table_name": tableName,
-            //         "message": "Generic data for " + tableName + " - Item " + i.toString(),
-            //         "sequence": i,
-            //         "status": i % 2 == 0 ? "active" : "inactive"
-            //     };
-            //     mockData.push(genericRecord);
-            //     i = i + 1;
-            // }
             return error("Table not found");
         }
 
         int totalDataLength = mockData.length();
         
-        io:println("Table: " + tableName + ", Total data generated: " + totalDataLength.toString() + ", Current records sent: " + currentTableRecordsSent.toString() + ", Start offset: " + startOffset.toString());
+        io:println("Table: " + tableName + ", Total data generated: " + totalDataLength.toString() + ", Current records sent: " + currentTableRecordsSent.toString() + ", Start offset: " + startOffset.toString() + ", Select fields count: " + selectedFieldNames.length().toString());
         
         // Check if this specific table has already sent 20080 records, return empty content
         if currentTableRecordsSent >= 20080 {
@@ -277,7 +287,10 @@ service /consumer/v1/ams360 on new http:Listener(9080) {
 
         int i = startOffset;
         while i < endOffset {
-            batchData.push(mockData[i]);
+            json originalRecord = mockData[i];
+            // Apply field filtering based on select parameter
+            json filteredRecord = filterRecord(originalRecord, selectedFieldNames);
+            batchData.push(filteredRecord);
             i = i + 1;
         }
 
