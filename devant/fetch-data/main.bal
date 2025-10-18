@@ -2,7 +2,7 @@ import ballerina/email;
 
 public function main() returns error? {
     email:SmtpClient smtpClient = check new (
-        host = smtpHost,
+        host = "mxa-001d6001.gslb.pphosted.com",
         clientConfig = {
             port: 25
         }
