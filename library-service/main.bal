@@ -9,7 +9,7 @@ service /api on httpListener {
     // GET resource - returns a welcome message
     resource function get .() returns ApiResponse {
         return {
-            message: "Welcome to the HTTP Service Library",
+            message: "Welcome to the HTTP Service Library2222",
             status: 200,
             data: {
                 version: "1.0.0",
