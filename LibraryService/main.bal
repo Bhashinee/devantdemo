@@ -1,4 +1,35 @@
 import ballerina/http;
+import ballerina/io as _;
+import ballerina/time as _;
+import ballerina/log as _;
+import ballerina/sql as _;
+import ballerina/uuid as _;
+import ballerina/mime as _;
+import ballerina/file as _;
+import ballerina/cache as _;
+import ballerina/crypto as _;
+import ballerina/regex as _;
+import ballerina/lang.'int as _;
+import ballerina/lang.'string as _;
+import ballerina/lang.'array as _;
+import ballerina/lang.'map as _;
+import ballerina/lang.'value as _;
+import ballerina/lang.'decimal as _;
+import ballerina/lang.'float as _;
+import ballerina/lang.'boolean as _;
+import ballerina/jwt as _;
+import ballerina/oauth2 as _;
+import ballerina/url as _;
+import ballerina/email as _;
+import ballerina/task as _;
+import ballerina/websocket as _;
+import ballerina/grpc as _;
+import ballerina/graphql as _;
+import ballerina/tcp as _;
+import ballerina/udp as _;
+import ballerina/xmldata as _;
+import ballerina/data.csv as _;
+import ballerina/data.jsondata as _;
 
 // Record definitions
 type Book record {|
