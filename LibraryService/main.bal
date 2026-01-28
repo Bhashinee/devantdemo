@@ -36,7 +36,6 @@ import ballerinax/kafka as _;
 import ballerinax/redis as _;
 import ballerinax/aws.dynamodb as _;
 import ballerinax/aws.dynamodbstreams as _;
-import ballerinax/aws.lambda as _;
 import ballerinax/aws.marketplace.mpe as _;
 import ballerinax/aws.marketplace.mpm as _;
 import ballerinax/aws.redshift as _;
