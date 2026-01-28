@@ -30,6 +30,25 @@ import ballerina/udp as _;
 import ballerina/xmldata as _;
 import ballerina/data.csv as _;
 import ballerina/data.jsondata as _;
+import ballerinax/mysql as _;
+import ballerinax/postgresql as _;
+import ballerinax/kafka as _;
+import ballerinax/redis as _;
+import ballerinax/aws.dynamodb as _;
+import ballerinax/aws.dynamodbstreams as _;
+import ballerinax/aws.lambda as _;
+import ballerinax/aws.marketplace.mpe as _;
+import ballerinax/aws.marketplace.mpm as _;
+import ballerinax/aws.redshift as _;
+import ballerinax/aws.redshift.driver as _;
+import ballerinax/aws.redshiftdata as _;
+import ballerinax/aws.s3 as _;
+import ballerinax/aws.secretmanager as _;
+import ballerinax/aws.ses as _;
+import ballerinax/aws.simpledb as _;
+import ballerinax/aws.sns as _;
+import ballerinax/aws.sqs as _;
+import ballerinax/azure.functions as _;
 
 // Record definitions
 type Book record {|
