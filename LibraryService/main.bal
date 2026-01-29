@@ -47,7 +47,6 @@ import ballerinax/aws.ses as _;
 import ballerinax/aws.simpledb as _;
 import ballerinax/aws.sns as _;
 import ballerinax/aws.sqs as _;
-import ballerinax/azure.functions as _;
 
 // Record definitions
 type Book record {|
