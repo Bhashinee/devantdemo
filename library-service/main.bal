@@ -1,7 +1,7 @@
 import ballerina/http;
 
 // HTTP service listener
-listener http:Listener httpListener = new (servicePort);
+listener http:Listener httpListener = new (9090);
 
 // Main HTTP service
 service /api on httpListener {
@@ -116,6 +116,19 @@ service /api on httpListener {
     }
     
     // Health check endpoint
+    resource function get health() returns ApiResponse {
+        return {
+            message: "Service is healthy",
+            status: 200,
+            data: {
+                timestamp: "2024-01-01T00:00:00Z",
+                uptime: "running"
+            }
+        };
+    }
+}
+
+service /api2 on httpListener {
     resource function get health() returns ApiResponse {
         return {
             message: "Service is healthy",
